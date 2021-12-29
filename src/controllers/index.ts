@@ -3,3 +3,4 @@ export * from './user-role.controller';
 export * from './role.controller';
 export * from './user.controller';
 export * from './user-user-credentials.controller';
+export * from './notes.controller';
