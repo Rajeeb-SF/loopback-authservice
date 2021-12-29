@@ -3,6 +3,7 @@ import {
   JWTAuthenticationComponent,
   TokenServiceBindings,
 } from '@loopback/authentication-jwt';
+import {AuthorizationComponent} from '@loopback/authorization';
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig, createBindingFromClass} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
@@ -47,6 +48,7 @@ export class LoopbackAuthExampleApplication extends BootMixin(
     // Add authentication component
     this.component(AuthenticationComponent);
     this.component(JWTAuthenticationComponent);
+    this.component(AuthorizationComponent);
     this.setUpBindings();
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
