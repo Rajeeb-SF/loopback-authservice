@@ -4,6 +4,7 @@ import {
   UserService,
 } from '@loopback/authentication';
 import {Credentials, TokenServiceBindings} from '@loopback/authentication-jwt';
+import {authorize} from '@loopback/authorization';
 import {inject} from '@loopback/core';
 import {
   Count,
@@ -30,6 +31,7 @@ import {PasswordHasherBindings, UserServiceBindings} from '../keys';
 import {User, UserWithPassword} from '../models';
 import {UserRepository} from '../repositories';
 import {
+  basicAuthorization,
   PasswordHasher,
   UserManagementService,
   validateCredentials,
@@ -72,7 +74,6 @@ export class UserController {
   ): Promise<User> {
     try {
       validateCredentials(_.pick(user, ['email', 'password']));
-      console.log('Valid credentials');
       return this.userManagementService.createUser(user);
     } catch (error) {
       if (error.code === 11000 && error.errmsg.includes('index: uniqueEmail')) {
@@ -151,6 +152,11 @@ export class UserController {
   //   },
   // })
   @authenticate('jwt')
+  @authorize({
+    allowedRoles: ['user'],
+    voters: [basicAuthorization],
+    resource: 'whoAmI',
+  })
   async findById(
     @param.path.number('id')
     id: number,
@@ -222,7 +228,9 @@ export class UserController {
 
     // convert a User object into a UserProfile object (reduced set of properties)
     const userProfile = this.userService.convertToUserProfile(user);
-
+    const userRole = await this.userManagementService.getUserRole(user.roleId);
+    userProfile.role = userRole.name;
+    userProfile.permissions = userRole.permissions;
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
 

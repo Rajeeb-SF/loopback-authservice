@@ -6,14 +6,16 @@ import {HttpErrors} from '@loopback/rest';
 import {securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
 import {PasswordHasherBindings} from '../keys';
-import {User, UserWithPassword} from '../models';
-import {UserRepository} from '../repositories';
+import {Role, User, UserWithPassword} from '../models';
+import {RoleRepository, UserRepository} from '../repositories';
 import {PasswordHasher} from './hash.password.bcryptjs';
 
 export class UserManagementService implements UserService<User, Credentials> {
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
+    @repository(RoleRepository)
+    public roleRepository: RoleRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public passwordHasher: PasswordHasher,
   ) {}
@@ -58,11 +60,13 @@ export class UserManagementService implements UserService<User, Credentials> {
       userName = user.firstName
         ? `${userName} ${user.lastName}`
         : `${user.lastName}`;
+    const userId: any = user.id;
     return {
-      [securityId]: Date.now().toString(),
+      [securityId]: userId.toString(),
       name: userName,
       id: user.id,
-      roles: user.roles,
+      role: '',
+      permissions: [],
     };
   }
 
@@ -77,5 +81,12 @@ export class UserManagementService implements UserService<User, Credentials> {
 
     await this.userRepository.userCredentials(user.id).create({password});
     return user;
+  }
+  async getUserRole(roleId: number): Promise<Role> {
+    try {
+      return this.roleRepository.findById(roleId);
+    } catch (error) {
+      throw new HttpErrors.ExpectationFailed();
+    }
   }
 }
